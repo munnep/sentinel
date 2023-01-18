@@ -1,0 +1,28 @@
+import "tfplan-functions" as plan
+import "azure-functions" as azure
+
+#Checking if resources are all in West or North Europe
+
+allowed_locations = [
+    "westeurope",
+    "northeurope",
+	"null"]
+
+//print ("starting validation")
+
+#Get all resource instances of the specified types
+resource_instances = plan.find_resources_by_provider("registry.terraform.io/hashicorp/azurerm")
+
+
+ resources_new = filter resource_instances as address, rc {
+	rc.change.actions contains "create" 
+    }
+	
+violatingAzureResources =
+      plan.filter_attribute_not_in_list(resources_new,"location",allowed_locations, true)
+
+
+#Main Checking if resources are all in West or North Europe
+main = rule {
+	length(violatingAzureResources["messages"]) is 0
+}
